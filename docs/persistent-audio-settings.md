@@ -1,7 +1,8 @@
 # Persistent audio settings in mic_app
 
 Connect to the board and use Enable suppression / Disable suppression in the
-Manual beamforming panel. Close Audacity or other Pico audio recording first.
+Manual beamforming panel. Close Pico audio recording and playback first,
+including Audacity and any player using the Pico speaker endpoint.
 Use Relearn noise with desired speech absent for two seconds when learning a
 new background profile. Then select Save & restart. The app enables automatic
 reconnection and the board restarts. Audio settings saved on board confirms
@@ -22,7 +23,7 @@ and read back before restarting; the previous sector remains intact. A failed
 or interrupted write is rejected on boot. Normal UF2 firmware updates do not
 include the reserved partition; a full flash erase removes saved settings.
 
-Saving requires inactive UAC, completed steering transitions and completed noise
+Saving requires inactive UAC capture and playback, completed steering transitions and completed noise
 learning. A 500 ms delay allows the correlated MIC/2 acknowledgement to drain.
 Capture is stopped and core 1 parks in SRAM before flash programming disables
 XIP access. The board then restarts, clearing intentional capture-stop counters.
@@ -50,5 +51,8 @@ flash saves. Capture and USB fault counters remained zero.
 The release omits debug-only kernel assertions/spinlock ownership validation to
 maintain real-time headroom. Explicit DMA sequence checks, capture faults, USB
 health checks, configuration bounds and flash CRC validation remain active.
-Flash uses 144,924 bytes; RAM uses 502,472 / 532,480 bytes (30,008 bytes free).
-Artifact hashes and reports are in build-tests/persistent-audio.
+That microphone-only validation build used 144,924 bytes of flash and
+502,472 / 532,480 bytes of RAM (30,008 bytes free). Its reports were written
+to build-tests/persistent-audio and may not be present in a fresh checkout.
+The current duplex build uses 147,228 bytes of flash and 513,760 bytes of RAM
+(18,720 bytes free); see [duplex validation](uac2-duplex.md#hardware-validation-2026-11-07).

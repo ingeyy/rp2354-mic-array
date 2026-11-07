@@ -8,3 +8,5 @@ target_sources(app PRIVATE src/main.c src/dsp_parallel.c src/beamform.c src/nois
 target_link_libraries(app PRIVATE m)
 
 target_sources(app PRIVATE src/audio_settings.c)
+
+target_sources(app PRIVATE src/speaker_playback.c)

@@ -9,7 +9,7 @@ struct Connection(Mutex<Option<transport::Session>>,AtomicU64);
 fn ports() -> Result<Vec<serde_json::Value>, String> {
     Ok(serialport::available_ports().map_err(|e| e.to_string())?.into_iter().map(|p| {
         let (label, telemetry) = match p.port_type {
-            serialport::SerialPortType::UsbPort(u) if u.vid==0x2fe3 && u.pid==6 => {
+            serialport::SerialPortType::UsbPort(u) if u.vid==0x2fe3 && matches!(u.pid,6|7) => {
                 let telemetry=matches!(u.interface,Some(2|3));
                 (format!("{} - {}",p.port_name,if telemetry {"Mic Array Telemetry"}else{"Diagnostics shell"}),telemetry)
             },

@@ -1,4 +1,5 @@
 #include "usb_audio.h"
+#include "speaker_playback.h"
 #include "capture.h"
 #include <zephyr/usb/usbd.h>
 #include <zephyr/usb/class/usbd_uac2.h>
@@ -13,7 +14,7 @@
 #define HIGH_FRAMES 1792
 #define TERMINAL UAC2_ENTITY_ID(DT_NODELABEL(mic_usb))
 static const struct device *const audio = DEVICE_DT_GET(DT_NODELABEL(mic_audio));
-USBD_DEVICE_DEFINE(mic_usb_device, DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 0x2fe3, 0x0006);
+USBD_DEVICE_DEFINE(mic_usb_device, DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 0x2fe3, 0x0007);
 USBD_DESC_LANG_DEFINE(mic_lang);
 USBD_DESC_MANUFACTURER_DEFINE(mic_mfr, "Pico Array Prototype");
 USBD_DESC_PRODUCT_DEFINE(mic_product, "Pico 2 Mic Array UAC2");
@@ -36,7 +37,7 @@ static struct {
 bool usb_audio_active(void)
 {
  k_spinlock_key_t key = k_spin_lock(&lock);
- bool active = state.enabled; k_spin_unlock(&lock, key); return active;
+ bool active = state.enabled || speaker_playback_active(); k_spin_unlock(&lock, key); return active;
 }
 
 __ramfunc __attribute__((optimize("O3"))) void usb_audio_push(const int16_t *pcm, uint32_t sequence)
@@ -67,6 +68,7 @@ static void terminal_update(const struct device *dev, uint8_t terminal,
 			    bool enabled, bool microframes, void *user)
 {
 	ARG_UNUSED(dev); ARG_UNUSED(user);
+	if(terminal==UAC2_ENTITY_ID(DT_NODELABEL(speaker_usb))){speaker_playback_enable(enabled && !microframes);return;}
 	if (terminal != TERMINAL) { return; }
 	k_spinlock_key_t key = k_spin_lock(&lock);
 	state.enabled = enabled && !microframes;
@@ -136,7 +138,24 @@ static __ramfunc __attribute__((optimize("O3"))) void sof(const struct device *d
 	if (ret) { k_mem_slab_free(&audio_packets, packet); }
 }
 
+K_MEM_SLAB_DEFINE(playback_packets,ROUND_UP(49*4,UDC_BUF_GRANULARITY),4,UDC_BUF_ALIGN);
+static void *receive_buffer(const struct device *dev,uint8_t terminal,uint16_t size,void *user)
+{
+ ARG_UNUSED(dev);ARG_UNUSED(user);void *buffer=NULL;
+ if(terminal!=UAC2_ENTITY_ID(DT_NODELABEL(speaker_usb)) || size>49*4)return NULL;
+ if(k_mem_slab_alloc(&playback_packets,&buffer,K_NO_WAIT))return NULL;
+ return buffer;
+}
+static void receive_data(const struct device *dev,uint8_t terminal,void *buffer,uint16_t size,void *user)
+{
+ ARG_UNUSED(dev);ARG_UNUSED(user);
+ if(terminal==UAC2_ENTITY_ID(DT_NODELABEL(speaker_usb)) && size && !(size%4))speaker_playback_receive(buffer,size/4);
+ k_mem_slab_free(&playback_packets,buffer);
+}
+static uint32_t playback_feedback(const struct device *dev,uint8_t terminal,void *user)
+{ARG_UNUSED(dev);ARG_UNUSED(terminal);ARG_UNUSED(user);return speaker_playback_feedback();}
 static const struct uac2_ops ops = {
+	.get_recv_buf=receive_buffer,.data_recv_cb=receive_data,.feedback_cb=playback_feedback,
 	.sof_cb = sof, .terminal_update_cb = terminal_update, .buf_release_cb = release_packet,
 };
 

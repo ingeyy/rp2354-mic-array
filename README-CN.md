@@ -6,19 +6,22 @@ English: [README.md](README.md)
 
 ## USB
 
-一个全速复合设备，VID:PID `2fe3:0006`，产品名 `Pico 2 Mic Array UAC2`，制造商 `Pico Array Prototype`，配置名 `Audio, shell and telemetry`：
+一个全速复合设备，VID:PID `2fe3:0007`（旧版仅麦克风固件为 `2fe3:0006`），产品名 `Pico 2 Mic Array UAC2`，制造商 `Pico Array Prototype`，配置名 `Audio, shell and telemetry`：
 
 | 功能 | USB 接口 | Windows 名称 |
 |---|---|---|
 | 诊断 shell | CDC 0 / data 1 | Mic Array Shell |
 | MIC/2 遥测与控制 | CDC 2 / data 3 | Mic Array Telemetry |
-| 四通道 48 kHz PCM16 | UAC2 麦克风 | Pico 2 Mic Array UAC2 |
+| 四通道 48 kHz PCM16 录音 | UAC2 麦克风 | Pico 2 Mic Array UAC2 |
+| 双通道 48 kHz PCM16 播放 | UAC2 扬声器 | Pico 2 Mic Array UAC2 |
 
 COM 口由电脑分配。`mic_app` 根据 VID、PID 和接口选择遥测口，再用 MIC/2 握手确认。UAC2 与两个串口各自独立。录四路原始通道时使用 WASAPI 独占模式；Windows 共享混音器给出的是立体声。参见 [CDC 遥测](docs/cdc-telemetry-service.md)。
 
 没有已保存的音频记录时，USB 输出就是四路麦克风。波束成形、降噪和方向估计都关闭。已保存的记录会在采集开始前恢复降噪模式、哼声滤波、输入通道、波束模式、方位角、假定仰角，以及学到的 129 个频点噪声谱。方向估计不在这份记录里，启用之前保持关闭。保存方式是 `mic_app` 的 Save & restart，或 MIC/2 命令 `SETTINGS_SAVE`，并且只在 UAC 空闲时执行。Flash 末尾 8 KiB 放两条交替的 4 KiB 记录，带世代号和 CRC32。普通 UF2 更新会留下这个分区；整片擦除会清掉它。参见 [持久化音频设置](docs/persistent-audio-settings.md)。
 
-`build/zephyr/zephyr_final.map` 中的镜像占用固件分区 2,088,960 字节里的 144,916 字节，以及 532,480 字节 RAM 里的 502,472 字节，剩余 30,008 字节。`CONFIG_DMA=n`，因为本应用独占 DMA 控制器。`CONFIG_ASSERT=n` 和 `CONFIG_SPIN_VALIDATE=n` 使调试用的内核检查不进入实时构建。采集序号检查、USB 健康计数、配置范围检查和设置区 CRC 保持开启。
+`build/zephyr/zephyr_final.map` 中的镜像占用固件分区 2,088,960 字节里的 147,228 字节，以及 532,480 字节 RAM 里的 513,760 字节，剩余 18,720 字节。`CONFIG_DMA=n`，因为本应用独占 DMA 控制器。`CONFIG_ASSERT=n` 和 `CONFIG_SPIN_VALIDATE=n` 使调试用的内核检查不进入实时构建。采集序号检查、USB 健康计数、配置范围检查和设置区 CRC 保持开启。
+
+在 Windows 输出设备中选择 `Pico 2 Mic Array UAC2`，即可通过 MAX98357A 播放到已连接的单只扬声器。USB 接收左右声道，功放模块的硬件选择决定输出左声道、右声道或混合单声道。播放与四通道录音可同时进行；尚未实现声学回声消除。更改降噪模式或保存设置前，须关闭录音和播放。USB 身份改变后 COM 口可能变化，旧版桌面应用可手动选择新的遥测口。参见 [UAC2 录音与播放](docs/uac2-duplex.md)。
 
 ## 信号路径
 
@@ -195,5 +198,3 @@ C 测试把查找表 CIC 与标量参考比较，包括溢出和块边界，再�
 本仓库中的固件、主机工具、桌面应用、硬件图和文档使用 MIT 许可证。见 [LICENSE](LICENSE)。
 
 Zephyr 和 Zephyr SDK 是 Apache-2.0。安装脚本会把它们下载到 `zephyrproject/`，该目录不属于本仓库。`patches/zephyr-udc-rpi-pico.patch` 修改的是 Zephyr 的 RP2350 USB 设备驱动，这个补丁文件仍遵循 Apache-2.0。`sdk-benchmark` 使用的 Pico SDK 是工作区里的 `hal_rpi_pico` 模块（BSD-3-Clause）。为 `mic_app` 安装的软件包保留各自的许可证。
-
-`U6.pdf` 和 `speaker.pdf` 是厂商文件，不在这里分发。

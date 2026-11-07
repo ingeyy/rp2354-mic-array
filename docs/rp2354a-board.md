@@ -19,9 +19,12 @@ the low half of CLOCK. Channel order is DATA1, DATA2, DATA3, DATA4.
 USB D−/D+ use package pins 51/52. The crystal is 12 MHz.
 
 src/board_pins.h is the shared pin map for PDM acquisition, raw/clock probes,
-and optional I2S output/probe. Compile-time checks enforce contiguous inputs
-and consecutive speaker pins required by these PIO programs. Speaker diagnostics
-remain deferred by AUDIO_SPEAKER_DIAGNOSTICS=0.
+and UAC2 I2S speaker output. Compile-time checks enforce contiguous inputs
+and consecutive speaker pins required by these PIO programs. Normal USB playback
+is enabled; only the legacy shell speaker diagnostics remain disabled by
+`AUDIO_SPEAKER_DIAGNOSTICS=0`. Playback uses a separate PIO0 state machine
+and chained DMA channels on IRQ3; microphone DMA uses IRQ2. See
+[UAC2 microphone and speaker](uac2-duplex.md).
 
 RP2354A has 2 MiB in-package flash. `app.overlay` sets that size and reserves
 the final 8 KiB for settings. Firmware occupies `0x000000–0x1FDFFF`. The two

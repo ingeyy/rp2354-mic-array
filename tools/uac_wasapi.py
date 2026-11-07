@@ -28,7 +28,7 @@ class Variant(C.Structure):
     _fields_ = [("vt",C.c_ushort),("reserved",C.c_ushort*3),("value",C.c_void_p),("extra",C.c_ulonglong)]
 
 
-def endpoints():
+def endpoints(flow=1):
     ole = C.OleDLL("ole32")
     ole.CoInitializeEx(None,0)
     ole.CoCreateInstance.argtypes = [C.POINTER(GUID),C.c_void_p,C.c_ulong,C.POINTER(GUID),C.POINTER(C.c_void_p)]
@@ -36,7 +36,7 @@ def endpoints():
     checked(ole.CoCreateInstance(C.byref(guid("bcde0395-e52f-467c-8e3d-c4579291692e")),None,23,
                                 C.byref(guid("a95664d2-9614-4f35-a746-de8db63617e6")),C.byref(enum)),"enumerator")
     collection = C.c_void_p()
-    call(enum,3,[C.c_int,C.c_ulong,C.POINTER(C.c_void_p)],1,1,C.byref(collection))
+    call(enum,3,[C.c_int,C.c_ulong,C.POINTER(C.c_void_p)],flow,1,C.byref(collection))
     count = C.c_uint(); call(collection,3,[C.POINTER(C.c_uint)],C.byref(count))
     result = []
     for i in range(count.value):

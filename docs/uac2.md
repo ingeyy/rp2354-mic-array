@@ -1,7 +1,11 @@
-# Four-channel UAC2 plus CDC
+# Historical 16 kHz UAC2 capture implementation
 
-> Current 48 kHz firmware: see [capture-48k.md](capture-48k.md). The 16 kHz
-> noise suppressor is unavailable at 48 kHz; results below are historical.
+> This document records the original capture-only firmware and its tests.
+> Current firmware supports four-channel 48 kHz capture, stereo playback and
+> full-band noise suppression. Use [UAC2 microphone and speaker](uac2-duplex.md),
+> [48 kHz capture](capture-48k.md) and [noise reduction](noise-reduction.md)
+> for current behavior. USB identities, ports and recovery artifacts below
+> describe that historical session and may no longer be available.
 
 Firmware exposes a full-speed asynchronous UAC2 microphone capture interface
 alongside the existing CDC shell. Audio is PCM16, four interleaved channels,

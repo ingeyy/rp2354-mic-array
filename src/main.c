@@ -5,6 +5,7 @@
 #include "speaker_tone.h"
 #include "stream.h"
 #include "usb_audio.h"
+#include "speaker_playback.h"
 #include "nr_control.h"
 #include "doa.h"
 #include <zephyr/shell/shell.h>
@@ -453,6 +454,8 @@ __ramfunc __attribute__((optimize("O3"))) int main(void)
 		printk("Capture initialization failed: %d; reboot required\n", ret);
 		return ret;
 	}
+	ret=speaker_playback_init();
+	if(ret){printk("Speaker initialization failed: %d\n",ret);return ret;}
 	uint32_t expected = 0;
 	uint32_t warmup = 48; /* >100 ms, including microphone and CIC settling. */
 	while (true) {

@@ -11,7 +11,7 @@ flash, pin wiring, and USB functions. See [RP2354A board](docs/rp2354a-board.md)
 
 ## USB
 
-One full-speed composite device, VID:PID `2fe3:0006`, product
+One full-speed composite device, VID:PID `2fe3:0007` (legacy microphone-only firmware: `2fe3:0006`), product
 `Pico 2 Mic Array UAC2`, manufacturer `Pico Array Prototype`, configuration
 `Audio, shell and telemetry`:
 
@@ -19,7 +19,8 @@ One full-speed composite device, VID:PID `2fe3:0006`, product
 |---|---|---|
 | Diagnostics shell | CDC 0 / data 1 | Mic Array Shell |
 | MIC/2 telemetry and controls | CDC 2 / data 3 | Mic Array Telemetry |
-| Four-channel 48 kHz PCM16 | UAC2 microphone | Pico 2 Mic Array UAC2 |
+| Four-channel 48 kHz PCM16 capture | UAC2 microphone | Pico 2 Mic Array UAC2 |
+| Stereo 48 kHz PCM16 playback | UAC2 speaker | Pico 2 Mic Array UAC2 |
 
 COM numbers come from the PC. `mic_app` picks the telemetry port from the
 VID, PID, and interface, then checks the MIC/2 handshake. UAC2 is independent
@@ -38,12 +39,19 @@ records with a generation count and CRC32. A normal UF2 update leaves that
 partition in place; erasing the whole flash clears it. See
 [persistent audio settings](docs/persistent-audio-settings.md).
 
-The linked image in `build/zephyr/zephyr_final.map` uses 144,916 bytes of the
-2,088,960-byte firmware partition and 502,472 of 532,480 bytes of RAM, leaving
-30,008 bytes. `CONFIG_DMA=n` because this application owns the DMA controller.
+The linked image in `build/zephyr/zephyr_final.map` uses 147,228 bytes of the
+2,088,960-byte firmware partition and 513,760 of 532,480 bytes of RAM, leaving
+18,720 bytes. `CONFIG_DMA=n` because this application owns the DMA controller.
 `CONFIG_ASSERT=n` and `CONFIG_SPIN_VALIDATE=n` keep debug kernel checks out of
 the realtime build. Capture sequence checks, USB health counters, configuration
 bounds, and the settings CRC stay on.
+
+Select `Pico 2 Mic Array UAC2` as the Windows output device to play through
+the MAX98357A and connected speaker while recording from the array. USB accepts
+stereo; the amplifier module selects left, right or a mono mix for the single
+speaker. Acoustic echo cancellation is not implemented. See
+[UAC2 microphone and speaker](docs/uac2-duplex.md) for playback, diagnostics
+and validation results.
 
 ## Signal path
 
@@ -319,5 +327,3 @@ into `zephyrproject/`, which is not part of this repository.
 driver; that file remains under the Apache-2.0 terms. The Pico SDK used by
 `sdk-benchmark` is the workspace's `hal_rpi_pico` module (BSD-3-Clause).
 Packages installed for `mic_app` keep their own licenses.
-
-`U6.pdf` and `speaker.pdf` are vendor documents and are not distributed here.

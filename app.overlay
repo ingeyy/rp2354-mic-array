@@ -31,7 +31,7 @@ mic_pio: &pio0 { status = "okay"; };
  mic_audio: microphone_audio {
   compatible = "zephyr,uac2";
   full-speed;
-  audio-function = <AUDIO_FUNCTION_MICROPHONE>;
+  audio-function = <AUDIO_FUNCTION_OTHER>;
   mic_clock: clock {
    compatible = "zephyr,uac2-clock-source";
    clock-type = "internal-fixed";
@@ -57,6 +57,24 @@ mic_pio: &pio0 { status = "okay"; };
   mic_as: capture_stream {
    compatible = "zephyr,uac2-audio-streaming";
    linked-terminal = <&mic_usb>;
+   subslot-size = <2>;
+   bit-resolution = <16>;
+  };
+  speaker_usb: usb_playback {
+   compatible = "zephyr,uac2-input-terminal";
+   clock-source = <&mic_clock>;
+   terminal-type = <USB_TERMINAL_STREAMING>;
+   front-left; front-right;
+  };
+  speaker_output: speaker {
+   compatible = "zephyr,uac2-output-terminal";
+   data-source = <&speaker_usb>;
+   clock-source = <&mic_clock>;
+   terminal-type = <OUTPUT_TERMINAL_SPEAKER>;
+  };
+  speaker_as: playback_stream {
+   compatible = "zephyr,uac2-audio-streaming";
+   linked-terminal = <&speaker_usb>;
    subslot-size = <2>;
    bit-resolution = <16>;
   };
